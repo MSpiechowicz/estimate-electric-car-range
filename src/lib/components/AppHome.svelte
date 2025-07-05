@@ -53,15 +53,19 @@
 
       {#if carStore.range > 0}
         <div
-          class="flex flex-col items-start justify-center gap-2"
+          class="w-full mt-2"
           in:fade={{ duration: 300 }}
           out:fade={{ duration: 0 }}
         >
-          <div class="flex items-center gap-2">
-            <IconRouteX customClass="w-6 h-6" />
-            <h3 class="text-xl text-black font-bold">
-              Estimated Range: {carStore.range} km / {carStore.rangeMi} miles
-            </h3>
+          <div class="flex items-center gap-3 p-4 rounded-lg border-2 border-secondary bg-[var(--color-secondary)]/10 shadow-sm">
+            <IconRouteX customClass="w-8 h-8 text-secondary" />
+            <div class="flex flex-col">
+              <span class="uppercase text-xs font-semibold text-gray-600 tracking-wide">Estimated Range</span>
+              <span class="text-3xl font-extrabold text-secondary">
+                {carStore.range} km
+                <span class="text-lg font-medium text-gray-700"> / {carStore.rangeMi} miles</span>
+              </span>
+            </div>
           </div>
         </div>
       {/if}
