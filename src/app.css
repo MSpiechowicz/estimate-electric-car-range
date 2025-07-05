@@ -9,16 +9,18 @@ html,
 body {
   min-height: 100vh;
   min-height: -webkit-fill-available;
-  background-color: var(--color-secondary);
+  background-color: var(--color-primary);
 }
 
 @theme {
-  --color-primary: #26b370;
-  --color-secondary: #1e80ff;
-  --color-input-border: #d0d5dd;
-  --color-input-hover: #b0c5e0;
-  --color-input-focus: #1e80ff;
-  --color-input-error: #d64545;
-  --color-button-primary: #1e80ff;
-  --color-button-hover: #1766cc;
+  --color-primary: #2A3D52;
+  --color-secondary: #3056A1;
+
+  --color-input-border: #D0D5DD;
+  --color-input-hover: #B0C5E0;
+  --color-input-focus: #3056A1;
+  --color-input-error: #D64545;
+
+  --color-button-primary: #3056A1;
+  --color-button-hover: #254687;
 }

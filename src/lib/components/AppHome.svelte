@@ -22,7 +22,7 @@
       <AppDescription />
       <AppNotificationBar />
 
-      <div class="my-4 flex flex-col items-start justify-center gap-4">
+      <div class="mt-4 mb-2 flex flex-col items-start justify-center gap-4">
         <AppBasicInputs />
         <AppAdvancedInputs bind:showAdvanced />
       </div>
@@ -59,7 +59,7 @@
         >
           <div class="flex items-center gap-2">
             <IconRouteX customClass="w-6 h-6" />
-            <h3 class="text-lg text-black font-bold">
+            <h3 class="text-xl text-black font-bold">
               Estimated Range: {carStore.range} km / {carStore.rangeMi} miles
             </h3>
           </div>
