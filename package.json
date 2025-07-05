@@ -1,0 +1,29 @@
+{
+  "name": "estimate-electric-car-range",
+  "private": true,
+  "license": "MIT",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "test": "vitest run",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "gh-pages -d dist",
+    "dev:docker:build": "docker build -t estimate-electric-car-range .",
+    "dev:docker:run": "docker run -p 4173:4173 estimate-electric-car-range",
+    "github:pages:deploy": "npm run build && npm run deploy"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^5.0.3",
+    "gh-pages": "^6.3.0",
+    "jsdom": "^26.1.0",
+    "svelte": "^5.28.1",
+    "vite": "^6.3.5",
+    "vitest": "^3.2.4"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.1.10",
+    "tailwindcss": "^4.1.10"
+  }
+}
