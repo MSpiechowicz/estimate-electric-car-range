@@ -11,7 +11,11 @@ export function calculateSpeedFactor(speed: number) {
 }
 
 export function calculateWindFactor(windSpeed: number) {
-  return 1 + Math.abs(windSpeed) / 100;
+  // Positive windSpeed represents a headwind (increasing consumption)
+  // Negative windSpeed represents a tailwind (reducing consumption)
+  // Each 1 km/h of wind changes consumption by 1 %.
+  // Clamp the factor to avoid unrealistically low or negative values.
+  return Math.max(0.5, 1 + windSpeed / 100);
 }
 
 export function calculateTempFactor(temperature: number) {

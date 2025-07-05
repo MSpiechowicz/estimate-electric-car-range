@@ -16,7 +16,9 @@ body {
   --color-primary: #26b370;
   --color-secondary: #1e80ff;
   --color-input-border: #d0d5dd;
-  --color-input-hover: #b0b8c3;
-  --color-input-focus: #26b370;
+  --color-input-hover: #b0c5e0;
+  --color-input-focus: #1e80ff;
   --color-input-error: #d64545;
+  --color-button-primary: #1e80ff;
+  --color-button-hover: #1766cc;
 }

@@ -11,8 +11,11 @@
   import AppInput from "./AppInput.svelte";
   import AppNotificationBar from "./AppNotificationBar.svelte";
 
+  import { fade } from 'svelte/transition';
   import { carStore } from "../store/carStore.svelte";
   import { parameterStore } from "../store/parameterStore.svelte";
+
+  let showAdvanced = false;
 
   const inputs = [
     {
@@ -71,15 +74,31 @@
       <AppHeader />
       <AppDescription />
       <AppNotificationBar />
+
+      <button
+        class="my-4 px-4 py-2 bg-button-primary hover:bg-button-hover text-white rounded self-stretch"
+        onclick={() => (showAdvanced = !showAdvanced)}
+      >
+        {#if showAdvanced}
+          Hide Advanced Options
+        {:else}
+          Show Advanced Options
+        {/if}
+      </button>
+
       {#each inputs as input, index}
-        <AppInput
-          {index}
-          label={input.label}
-          icon={input.icon}
-          description={input.description}
-          bind:value={input.value}
-          onChange={() => {}}
-        />
+        {#if index < 3 || showAdvanced}
+          <div in:fade={{ duration: 300 }} out:fade={{ duration: 300 }}>
+            <AppInput
+              {index}
+              label={input.label}
+              icon={input.icon}
+              description={input.description}
+              bind:value={input.value}
+              onChange={() => {}}
+            />
+          </div>
+        {/if}
       {/each}
     </div>
   </div>
