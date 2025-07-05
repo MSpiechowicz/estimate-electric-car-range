@@ -2,7 +2,7 @@
   let { label, icon: Icon, description, value = $bindable(), onChange, index } = $props();
 </script>
 
-<div class="flex flex-col items-start justify-center gap-2 w-64">
+<div class="flex flex-col items-start justify-center gap-2 w-[30ch]">
   <div class="flex flex-col items-start justify-center gap-1">
     <div class="flex flex-row items-center justify-start gap-1.5">
       <Icon customClass="!w-5 !h-auto" customColor="#364153" />
@@ -14,7 +14,7 @@
     id={`input-${index}`}
     tabindex={index}
     type="number"
-    class="w-full p-2 rounded-md border-2 border-input-border hover:border-input-hover focus:border-input-focus focus:outline-none"
+    class="p-2 rounded-md border-2 border-input-border hover:border-input-hover focus:border-input-focus focus:outline-none w-54"
     bind:value
     oninput={onChange}
   />

@@ -51,11 +51,11 @@ export function calculateEnergyConsumption(
 }
 
 export function calculateRangeKm(battery: number, adjustedWhPerKm: number) {
-  return (battery * 1000) / adjustedWhPerKm;
+  return Math.round((battery * 1000) / adjustedWhPerKm);
 }
 
 export function calculateRangeMi(rangeKm: number) {
-  return rangeKm * MILES_PER_KM;
+  return Math.round(rangeKm * MILES_PER_KM);
 }
 
 export function calculateRange() {

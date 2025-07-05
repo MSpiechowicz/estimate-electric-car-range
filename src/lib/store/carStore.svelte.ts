@@ -5,4 +5,8 @@ export const carStore = $state({
   consumption: 15,
   // km/h
   speed: 110,
+  // km
+  range: 0,
+  // mi
+  rangeMi: 0,
 });
