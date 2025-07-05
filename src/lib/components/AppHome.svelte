@@ -22,8 +22,10 @@
       <AppDescription />
       <AppNotificationBar />
 
-      <AppBasicInputs />
-      <AppAdvancedInputs bind:showAdvanced />
+      <div class="my-4 flex flex-col items-start justify-center gap-4">
+        <AppBasicInputs />
+        <AppAdvancedInputs bind:showAdvanced />
+      </div>
 
       <div class="flex flex-row items-start justify-center gap-2">
         <button
