@@ -7,17 +7,16 @@
 
 html,
 body {
-  background-color: #f3f4f6;
   min-height: 100vh;
   min-height: -webkit-fill-available;
+  background-color: var(--color-primary);
 }
 
 @theme {
-  --color-primary: #d72638;
-  --color-primary-hover: #b71c2a;
-  --color-header: #1f2937;
-  --color-body: #4B5563;
-  --color-border: #D1D5DB;
-  --color-input-hover: #E5E7EB;
-  --color-input-focus-shadow: 0 0 0 3px rgba(215, 38, 56, 0.3);
+  --color-primary: #26b370;
+  --color-secondary: #1e80ff;
+  --color-input-border: #d0d5dd;
+  --color-input-hover: #b0b8c3;
+  --color-input-focus: #26b370;
+  --color-input-error: #d64545;
 }
