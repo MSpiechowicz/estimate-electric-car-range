@@ -39,12 +39,49 @@ export function calculateSpeedFactor(speed: number) {
   return Math.max(0.1, factor);
 }
 
-export function calculateWindFactor(windSpeed: number) {
-  // Positive windSpeed represents a headwind (increasing consumption)
-  // Negative windSpeed represents a tailwind (reducing consumption)
-  // Each 1 km/h of wind changes consumption by 1 %.
-  // Clamp the factor to avoid unrealistically low or negative values.
-  return Math.max(0.5, 1 + windSpeed / 100);
+/**
+ * Returns a multiplier that adjusts energy consumption based on wind.
+ *
+ * The key insight is that aerodynamic drag – the portion of consumption that
+ * wind influences – depends on the square of the air speed the vehicle
+ * experiences (vehicle speed ± wind speed). We therefore:
+ *
+ * 1. Compute the *relative* air speed: `airSpeed = max(0, speed + windSpeed)`.
+ *    • `windSpeed` > 0 → head-wind (airSpeed increases)
+ *    • `windSpeed` < 0 → tail-wind (airSpeed decreases)
+ *
+ * 2. Scale the aerodynamic share of consumption quadratically with the ratio
+ *    `(airSpeed / speed)`.
+ *
+ * 3. Blend it with the rolling-resistance share, which is mostly unaffected by
+ *    wind.  At typical highway speeds, aerodynamic losses account for roughly
+ *    60 % of total energy use, leaving 40 % for rolling resistance and
+ *    drivetrain losses.
+ *
+ * The resulting factor is:
+ *   factor = (1 − AERO_SHARE) + AERO_SHARE · (airSpeed / speed)²
+ *
+ * Finally we clamp to a sensible minimum (0.5) so an extreme tail-wind cannot
+ * unrealistically drop consumption below 50 % of reference.
+ */
+export function calculateWindFactor(speed: number, windSpeed: number) {
+  // Prevent division by zero – if speed is extremely low, assume wind has
+  // negligible effect on per-distance consumption because aerodynamic drag is
+  // tiny compared with auxiliary loads.
+  if (speed < 1) {
+    return 1;
+  }
+
+  // Relative air speed perceived by the car (km/h).
+  const airSpeed = Math.max(0, speed + windSpeed);
+
+  const AERO_SHARE = 0.6; // Fraction of energy normally spent overcoming drag
+
+  const ratio = airSpeed / speed;
+  const factor = (1 - AERO_SHARE) + AERO_SHARE * ratio * ratio;
+
+  // Avoid unrealistically low factors.
+  return Math.max(0.5, factor);
 }
 
 export function calculateTempFactor(temperature: number) {
@@ -92,7 +129,7 @@ export function calculateRange() {
   const { windSpeed, temperature, roadSlope, recuperation } = parameterStore;
 
   const speedFactor = calculateSpeedFactor(speed);
-  const windFactor = calculateWindFactor(windSpeed);
+  const windFactor = calculateWindFactor(speed, windSpeed);
   const tempFactor = calculateTempFactor(temperature);
   const recuperationFactor = calculateRecuperationFactor(recuperation);
   const tiltFactor = calculateTiltFactor(roadSlope);
