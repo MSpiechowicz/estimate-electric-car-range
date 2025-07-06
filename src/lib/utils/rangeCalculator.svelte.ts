@@ -5,6 +5,11 @@ import { parameterStore } from "../store/parameterStore.svelte";
 const REFERENCE_SPEED = 77;
 const CONVERSION_FACTOR = 10;
 const MILES_PER_KM = 0.621371;
+// Recuperation can only recover a fraction of expended energy. We cap its
+// effectiveness to 25 % – tweak if you have more accurate data for a specific
+// vehicle. A value of 100 % recuperation in the UI will therefore yield a
+// 25 % reduction in net consumption (factor = 0.75).
+const MAX_RECUPERATION_EFFECTIVENESS = 0.25;
 
 /**
  * Consumption due to rolling resistance grows roughly linearly with speed,
@@ -20,6 +25,9 @@ const MILES_PER_KM = 0.621371;
  * speeds so we assign it a larger weight (e.g. 70 %). To avoid negative or
  * unrealistically small consumption factors at very low speeds we clamp the
  * result to a sensible minimum.
+ *
+ * @param speed - The speed of the vehicle in km/h.
+ * @returns A factor that reduces or increases energy consumption based on the speed.
  */
 export function calculateSpeedFactor(speed: number) {
   // Guard for negative inputs
@@ -63,6 +71,10 @@ export function calculateSpeedFactor(speed: number) {
  *
  * Finally we clamp to a sensible minimum (0.5) so an extreme tail-wind cannot
  * unrealistically drop consumption below 50 % of reference.
+ *
+ * @param speed - The speed of the vehicle in km/h.
+ * @param windSpeed - The speed of the wind in km/h.
+ * @returns A factor that reduces or increases energy consumption based on the wind speed.
  */
 export function calculateWindFactor(speed: number, windSpeed: number) {
   // Prevent division by zero – if speed is extremely low, assume wind has
@@ -84,18 +96,49 @@ export function calculateWindFactor(speed: number, windSpeed: number) {
   return Math.max(0.5, factor);
 }
 
+/**
+ * Calculates the consumption reduction factor from temperature.
+ * A lower temperature leads to a larger reduction in energy consumption,
+ * up to a realistic maximum effectiveness.
+ *
+ * @param temperature - A value from -60°C to 20°C.
+ * @returns A factor that reduces or increases energy consumption based on the temperature.
+ */
 export function calculateTempFactor(temperature: number) {
   return temperature < 20
     ? 1 + (20 - temperature) * 0.01
     : 1 + Math.max(0, temperature - 30) * 0.005;
 }
 
+/**
+ * Calculates the consumption reduction factor from recuperation.
+ * A higher recuperation setting (0-100) leads to a larger reduction in
+ * energy consumption, up to a realistic maximum effectiveness.
+ *
+ * @param recuperation - A value from 0 (no regen) to 100 (max regen).
+ * @returns A consumption multiplier, e.g., 1.0 for no effect, or 0.75 for max effect.
+ */
 export function calculateRecuperationFactor(recuperation: number) {
-  return 1 - Math.min(Math.max(recuperation, 0), 100) / 100;
+  // Clamp input to [0, 100] and map to a 0-1 scale.
+  const perc = Math.min(Math.max(recuperation, 0), 100) / 100;
+
+  // Linearly scale the reduction up to the maximum allowed effectiveness.
+  return 1 - perc * MAX_RECUPERATION_EFFECTIVENESS;
 }
 
-export function calculateTiltFactor(roadSlope: number) {
-  return 1 + roadSlope * 0.02;
+/**
+ * Adjusts consumption for road gradient.  A 1 % uphill increases energy use by
+ * roughly 2 %, while a downhill grade provides a corresponding benefit.
+ * The factor is clamped so that even extreme downhill slopes cannot drive the
+ * multiplier to zero or negative values – we assume at least 10 % of normal
+ * consumption remains due to rolling resistance, auxiliary systems, etc.
+ *
+ * @param roadSlope - Grade in percent, where positive is uphill and negative
+ *                    is downhill. Typical roads range from −10 % to +10 %.
+ * @returns A factor that reduces or increases energy consumption based on the road slope.
+ */
+export function calculateRoadSlopeFactor(roadSlope: number) {
+  return Math.max(0.1, 1 + roadSlope * 0.02);
 }
 
 export function calculateConsumptionFactor(consumption: number) {
@@ -132,7 +175,7 @@ export function calculateRange() {
   const windFactor = calculateWindFactor(speed, windSpeed);
   const tempFactor = calculateTempFactor(temperature);
   const recuperationFactor = calculateRecuperationFactor(recuperation);
-  const tiltFactor = calculateTiltFactor(roadSlope);
+  const tiltFactor = calculateRoadSlopeFactor(roadSlope);
   const consumptionFactor = calculateConsumptionFactor(consumption);
 
   const energyConsumption = calculateEnergyConsumption(

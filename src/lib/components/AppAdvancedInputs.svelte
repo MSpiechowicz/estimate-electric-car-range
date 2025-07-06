@@ -18,6 +18,8 @@
       onChange={() => {}}
       index={3}
       label="Recuperation"
+      min={1}
+      max={25}
       icon={IconRotate}
       description="The average recuperation in % of energy recovered when braking."
       bind:value={parameterStore.recuperation}
