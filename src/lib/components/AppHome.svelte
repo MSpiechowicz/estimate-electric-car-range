@@ -1,22 +1,28 @@
 <script lang="ts">
+  import AppActions from "./AppActions.svelte";
   import AppAdvancedInputs from "./AppAdvancedInputs.svelte";
   import AppBasicInputs from "./AppBasicInputs.svelte";
   import AppDescription from "./AppDescription.svelte";
+  import AppEstimatedRange from "./AppEstimatedRange.svelte";
   import AppHeader from "./AppHeader.svelte";
   import AppNotificationBar from "./AppNotificationBar.svelte";
 
-  import IconCalculator from "../svg/IconCalculator.svelte";
-  import IconRouteX from "../svg/IconRouteX.svelte";
-
-  import { fade } from "svelte/transition";
   import { carStore } from "../store/carStore.svelte";
   import { calculateRange } from "../utils/rangeCalculator.svelte";
 
   let showAdvanced = $state(false);
+
+  function handleSubmit(event: SubmitEvent) {
+    event.preventDefault();
+
+    const { rangeKm, rangeMi } = calculateRange();
+    carStore.range = rangeKm;
+    carStore.rangeMi = rangeMi;
+  }
 </script>
 
 <div class={"p-4 md:p-10 flex justify-center items-center min-h-screen"}>
-  <div class="max-w-screen-sm w-full bg-white p-6 rounded-lg shadow-md">
+  <form class="max-w-screen-sm w-full bg-white p-6 rounded-lg shadow-md" onsubmit={handleSubmit}>
     <div class="flex flex-col items-start justify-center gap-2">
       <AppHeader />
       <AppDescription />
@@ -27,48 +33,8 @@
         <AppAdvancedInputs bind:showAdvanced />
       </div>
 
-      <div class="flex flex-col md:flex-row items-start justify-center gap-0 md:gap-2">
-        <button
-          class="my-2 md:my-4 px-4 py-2 bg-button-primary hover:bg-button-hover text-white rounded self-stretch flex items-center justify-center gap-2 w-54"
-          onclick={() => {
-            const { rangeKm, rangeMi } = calculateRange();
-            carStore.range = rangeKm;
-            carStore.rangeMi = rangeMi;
-          }}
-        >
-          <IconCalculator customClass="w-6 h-6" />
-          Calculate Range
-        </button>
-        <button
-          class="my-2 md:my-4 px-4 py-2 bg-trasparent border-2 border-secondary text-secondary hover:text-white hover:bg-secondary rounded self-stretch flex items-center justify-center gap-2"
-          onclick={() => (showAdvanced = !showAdvanced)}
-        >
-          {#if showAdvanced}
-            Hide Advanced Options
-          {:else}
-            Show Advanced Options
-          {/if}
-        </button>
-      </div>
-
-      {#if carStore.range > 0}
-        <div class="w-full mt-2" in:fade={{ duration: 300 }} out:fade={{ duration: 0 }}>
-          <div
-            class="flex items-center gap-3 p-4 rounded-lg border-2 border-secondary bg-[var(--color-secondary)]/10 shadow-sm"
-          >
-            <IconRouteX customClass="w-8 h-8 text-secondary" />
-            <div class="flex flex-col">
-              <span class="uppercase text-xs font-semibold text-gray-600 tracking-wide"
-                >Estimated Range</span
-              >
-              <span class="text-3xl font-extrabold text-secondary">
-                {carStore.range} km
-                <span class="text-lg font-medium text-gray-700"> / {carStore.rangeMi} miles</span>
-              </span>
-            </div>
-          </div>
-        </div>
-      {/if}
+      <AppActions bind:showAdvanced />
+      <AppEstimatedRange />
     </div>
-  </div>
+  </form>
 </div>
