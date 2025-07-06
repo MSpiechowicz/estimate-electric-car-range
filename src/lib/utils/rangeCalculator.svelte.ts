@@ -10,6 +10,10 @@ const MILES_PER_KM = 0.621371;
 // vehicle. A value of 100 % recuperation in the UI will therefore yield a
 // 25 % reduction in net consumption (factor = 0.75).
 const MAX_RECUPERATION_EFFECTIVENESS = 0.25;
+const LINEAR_RESISTANCE_WEIGHT = 0.3;
+const AERODYNAMIC_DRAG_WEIGHT = 0.7;
+// Fraction of energy normally spent overcoming drag
+const AERODYNAMIC_DRAG_SHARE = 0.6;
 
 /**
  * Consumption due to rolling resistance grows roughly linearly with speed,
@@ -35,11 +39,7 @@ export function calculateSpeedFactor(speed: number) {
 
   const speedRatio = safeSpeed / REFERENCE_SPEED;
 
-  // Tunable weights – tweak if you have better calibration data
-  const K_LINEAR = 0.3; // rolling resistance share
-  const K_QUAD = 0.7; // aerodynamic drag share (K_LINEAR + K_QUAD = 1)
-
-  const factor = K_LINEAR * speedRatio + K_QUAD * speedRatio * speedRatio;
+  const factor = LINEAR_RESISTANCE_WEIGHT * speedRatio + AERODYNAMIC_DRAG_WEIGHT * speedRatio * speedRatio;
 
   // Ensure the factor never drops below 0.1 (10 % of reference consumption)
   // to account for ancillary loads such as HVAC and electronics when moving
@@ -87,10 +87,8 @@ export function calculateWindFactor(speed: number, windSpeed: number) {
   // Relative air speed perceived by the car (km/h).
   const airSpeed = Math.max(0, speed + windSpeed);
 
-  const AERO_SHARE = 0.6; // Fraction of energy normally spent overcoming drag
-
   const ratio = airSpeed / speed;
-  const factor = (1 - AERO_SHARE) + AERO_SHARE * ratio * ratio;
+  const factor = (1 - AERODYNAMIC_DRAG_SHARE) + AERODYNAMIC_DRAG_SHARE * ratio * ratio;
 
   // Avoid unrealistically low factors.
   return Math.max(0.5, factor);
@@ -176,14 +174,32 @@ export function calculateEnergyConsumption(
   );
 }
 
+/**
+ * Calculates the range in kilometers based on the battery capacity and the adjusted Wh/km.
+ *
+ * @param battery - The battery capacity in kWh.
+ * @param adjustedWhPerKm - The adjusted Wh/km.
+ * @returns The range in kilometers.
+ */
 export function calculateRangeKm(battery: number, adjustedWhPerKm: number) {
   return Math.round((battery * 1000) / adjustedWhPerKm);
 }
 
+/**
+ * Calculates the range in miles based on the range in kilometers.
+ *
+ * @param rangeKm - The range in kilometers.
+ * @returns The range in miles.
+ */
 export function calculateRangeMi(rangeKm: number) {
   return Math.round(rangeKm * MILES_PER_KM);
 }
 
+/**
+ * Calculates the range in kilometers and miles based on the battery capacity, consumption, speed, wind speed, temperature, road slope, and recuperation.
+ *
+ * @returns The range in kilometers and miles.
+ */
 export function calculateRange() {
   const { battery, consumption, speed } = carStore;
   const { windSpeed, temperature, roadSlope, recuperation } = parameterStore;

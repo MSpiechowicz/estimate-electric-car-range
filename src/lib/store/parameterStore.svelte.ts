@@ -6,5 +6,5 @@ export const parameterStore = $state({
   // % - positive for uphill, negative for downhill
   roadSlope: 0,
   // % of energy recovered when braking
-  recuperation: 10,
+  recuperation: 100,
 });
