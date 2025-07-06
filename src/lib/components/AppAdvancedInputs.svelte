@@ -29,6 +29,7 @@
       onChange={() => {}}
       index={4}
       label="Wind Speed"
+      min={-200}
       icon={IconWind}
       description="The average wind speed in km/h. For headwind, use a positive value. For tailwind, use a negative value."
       bind:value={parameterStore.windSpeed}
@@ -40,6 +41,7 @@
       onChange={() => {}}
       index={5}
       label="Temperature"
+      min={-60}
       icon={IconTemperature}
       description="The average temperature in °C. Lower temperatures often decrease the overall range of the car."
       bind:value={parameterStore.temperature}
@@ -51,6 +53,7 @@
       onChange={() => {}}
       index={6}
       label="Road Slope"
+      min={-40}
       icon={IconRoad}
       description="The average road slope in %. Positive for uphill, negative for downhill."
       bind:value={parameterStore.roadSlope}
