@@ -141,21 +141,38 @@ export function calculateRoadSlopeFactor(roadSlope: number) {
   return Math.max(0.1, 1 + roadSlope * 0.02);
 }
 
+/**
+ * Converts consumption from kWh/100 km to Wh/km.
+ *
+ * @param consumption - The consumption in kWh/100 km.
+ * @returns The consumption in Wh/km.
+ */
 export function calculateConsumptionFactor(consumption: number) {
   // Convert consumption to Wh/km (kWh/100 km × 10)
   return consumption * CONVERSION_FACTOR;
 }
 
+/**
+ * Calculates the total energy consumption based on various factors.
+ *
+ * @param consumptionFactor - The factor that adjusts consumption based on the consumption.
+ * @param speedFactor - The factor that adjusts consumption based on the speed.
+ * @param windFactor - The factor that adjusts consumption based on the wind speed.
+ * @param tempFactor - The factor that adjusts consumption based on the temperature.
+ * @param roadSlopeFactor - The factor that adjusts consumption based on the road slope.
+ * @param recuperationFactor - The factor that adjusts consumption based on the recuperation.
+ * @returns The total energy consumption.
+ */
 export function calculateEnergyConsumption(
   consumptionFactor: number,
   speedFactor: number,
   windFactor: number,
   tempFactor: number,
-  tiltFactor: number,
+  roadSlopeFactor: number,
   recuperationFactor: number
 ) {
   return (
-    consumptionFactor * speedFactor * windFactor * tempFactor * tiltFactor * recuperationFactor
+    consumptionFactor * speedFactor * windFactor * tempFactor * roadSlopeFactor * recuperationFactor
   );
 }
 
@@ -175,7 +192,7 @@ export function calculateRange() {
   const windFactor = calculateWindFactor(speed, windSpeed);
   const tempFactor = calculateTempFactor(temperature);
   const recuperationFactor = calculateRecuperationFactor(recuperation);
-  const tiltFactor = calculateRoadSlopeFactor(roadSlope);
+  const roadSlopeFactor = calculateRoadSlopeFactor(roadSlope);
   const consumptionFactor = calculateConsumptionFactor(consumption);
 
   const energyConsumption = calculateEnergyConsumption(
@@ -183,7 +200,7 @@ export function calculateRange() {
     speedFactor,
     windFactor,
     tempFactor,
-    tiltFactor,
+    roadSlopeFactor,
     recuperationFactor
   );
 
