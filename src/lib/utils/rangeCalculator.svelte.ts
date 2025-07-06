@@ -1,32 +1,27 @@
 import {
   AERODYNAMIC_DRAG_SHARE,
-  AERODYNAMIC_DRAG_WEIGHT,
   COLD_PENALTY_PER_DEGREE,
+  CONSUMPTION_FACTOR_AT_HIGH_SPEED_THRESHOLD,
+  CONSUMPTION_FACTOR_AT_LOW_SPEED_THRESHOLD,
+  CONSUMPTION_FACTOR_AT_VERY_HIGH_SPEED_THRESHOLD,
   CONVERSION_FACTOR,
+  HIGH_SPEED_THRESHOLD,
   HOT_PENALTY_PER_DEGREE,
   IDEAL_TEMP,
-  LINEAR_RESISTANCE_WEIGHT,
+  LOW_SPEED_THRESHOLD,
   MAX_RECUPERATION_EFFECTIVENESS,
   MILES_PER_KM,
-  REFERENCE_SPEED,
+  POWER_FACTOR_ABOVE_VERY_HIGH_SPEED,
+  VERY_HIGH_SPEED_THRESHOLD,
 } from "../constants/calculations";
 import { carStore } from "../store/carStore.svelte";
 import { parameterStore } from "../store/parameterStore.svelte";
 
 /**
- * Consumption due to rolling resistance grows roughly linearly with speed,
- * whereas aerodynamic drag grows with the square of speed. A simple way to
- * capture these two influences without diving into vehicle-specific drag
- * coefficients is to blend a linear and a quadratic term that are both
- * anchored at the reference speed. We use the following heuristic model:
- *
- * factor = k_linear * (v / v_ref) + k_quad * (v / v_ref)^2
- *
- * where k_linear + k_quad = 1 to ensure the factor is exactly 1 when
- * v == v_ref (77 km/h). Empirically, aerodynamic drag dominates at higher
- * speeds so we assign it a larger weight (e.g. 70 %). To avoid negative or
- * unrealistically small consumption factors at very low speeds we clamp the
- * result to a sensible minimum.
+ * Calculates the consumption factor based on the speed.
+ * The model is a piecewise function that anchors at the reference speed and
+ * applies a quadratic penalty for deviation. This aims to provide a more
+ * accurate and tunable curve for consumption based on speed.
  *
  * @param speed - The speed of the vehicle in km/h.
  * @returns A factor that reduces or increases energy consumption based on the speed.
@@ -35,14 +30,39 @@ export function calculateSpeedFactor(speed: number) {
   // Guard for negative inputs
   const safeSpeed = Math.max(0, speed);
 
-  const speedRatio = safeSpeed / REFERENCE_SPEED;
+  // Clamp to a minimum for very low speeds
+  if (safeSpeed <= LOW_SPEED_THRESHOLD) {
+    return CONSUMPTION_FACTOR_AT_LOW_SPEED_THRESHOLD;
+  }
 
-  const factor = LINEAR_RESISTANCE_WEIGHT * speedRatio + AERODYNAMIC_DRAG_WEIGHT * speedRatio * speedRatio;
+  // Increase linearly between low and high speed thresholds
+  if (safeSpeed <= HIGH_SPEED_THRESHOLD) {
+    const ratio = (safeSpeed - LOW_SPEED_THRESHOLD) / (HIGH_SPEED_THRESHOLD - LOW_SPEED_THRESHOLD);
+    return (
+      CONSUMPTION_FACTOR_AT_LOW_SPEED_THRESHOLD +
+      ratio *
+        (CONSUMPTION_FACTOR_AT_HIGH_SPEED_THRESHOLD - CONSUMPTION_FACTOR_AT_LOW_SPEED_THRESHOLD)
+    );
+  }
 
-  // Ensure the factor never drops below 0.1 (10 % of reference consumption)
-  // to account for ancillary loads such as HVAC and electronics when moving
-  // at very low speeds.
-  return Math.max(0.1, factor);
+  // Increase linearly between high and very high speed thresholds
+  if (safeSpeed <= VERY_HIGH_SPEED_THRESHOLD) {
+    const ratio =
+      (safeSpeed - HIGH_SPEED_THRESHOLD) / (VERY_HIGH_SPEED_THRESHOLD - HIGH_SPEED_THRESHOLD);
+    return (
+      CONSUMPTION_FACTOR_AT_HIGH_SPEED_THRESHOLD +
+      ratio *
+        (CONSUMPTION_FACTOR_AT_VERY_HIGH_SPEED_THRESHOLD -
+          CONSUMPTION_FACTOR_AT_HIGH_SPEED_THRESHOLD)
+    );
+  }
+
+  // Power law increase above very high speed threshold
+  const ratio = safeSpeed / VERY_HIGH_SPEED_THRESHOLD;
+  return (
+    CONSUMPTION_FACTOR_AT_VERY_HIGH_SPEED_THRESHOLD *
+    Math.pow(ratio, POWER_FACTOR_ABOVE_VERY_HIGH_SPEED)
+  );
 }
 
 /**
@@ -86,7 +106,7 @@ export function calculateWindFactor(speed: number, windSpeed: number) {
   const airSpeed = Math.max(0, speed + windSpeed);
 
   const ratio = airSpeed / speed;
-  const factor = (1 - AERODYNAMIC_DRAG_SHARE) + AERODYNAMIC_DRAG_SHARE * ratio * ratio;
+  const factor = 1 - AERODYNAMIC_DRAG_SHARE + AERODYNAMIC_DRAG_SHARE * ratio * ratio;
 
   // Avoid unrealistically low factors.
   return Math.max(0.5, factor);
@@ -103,8 +123,6 @@ export function calculateWindFactor(speed: number, windSpeed: number) {
  * @returns A consumption multiplier (e.g., 1.0 at ideal temp, >1 otherwise).
  */
 export function calculateTempFactor(temperature: number): number {
-
-
   if (temperature < IDEAL_TEMP) {
     // Colder than ideal, apply cold penalty
     return 1 + (IDEAL_TEMP - temperature) * COLD_PENALTY_PER_DEGREE;

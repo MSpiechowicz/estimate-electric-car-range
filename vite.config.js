@@ -8,13 +8,16 @@ export default defineConfig({
   base: "/estimate-electric-car-range",
   test: {
     globals: true,
-    environment: 'jsdom',
+    environment: "jsdom",
     coverage: {
       enabled: true,
-      provider: 'istanbul',
-      reporter: ['text', 'html', 'lcov'],
+      provider: "istanbul",
+      reporter: ["text", "html", "lcov"],
       all: true,
-      include: ['src/lib/utils/rangeCalculator.svelte.ts'],
+      include: [
+        "src/lib/utils/rangeCalculator.svelte.ts",
+        "src/lib/tests/mercedesEQB.svelte.test.ts",
+      ],
     },
-  }
+  },
 });

@@ -1,15 +1,19 @@
 import { describe, expect, it } from "vitest";
 import {
   AERODYNAMIC_DRAG_SHARE,
-  AERODYNAMIC_DRAG_WEIGHT,
   COLD_PENALTY_PER_DEGREE,
+  CONSUMPTION_FACTOR_AT_HIGH_SPEED_THRESHOLD,
+  CONSUMPTION_FACTOR_AT_LOW_SPEED_THRESHOLD,
+  CONSUMPTION_FACTOR_AT_VERY_HIGH_SPEED_THRESHOLD,
   CONVERSION_FACTOR,
+  HIGH_SPEED_THRESHOLD,
   HOT_PENALTY_PER_DEGREE,
   IDEAL_TEMP,
-  LINEAR_RESISTANCE_WEIGHT,
+  LOW_SPEED_THRESHOLD,
   MAX_RECUPERATION_EFFECTIVENESS,
   MILES_PER_KM,
-  REFERENCE_SPEED,
+  POWER_FACTOR_ABOVE_VERY_HIGH_SPEED,
+  VERY_HIGH_SPEED_THRESHOLD,
 } from "../../constants/calculations";
 import { carStore } from "../../store/carStore.svelte";
 import {
@@ -29,22 +33,41 @@ carStore.battery = 75;
 carStore.consumption = 15;
 carStore.speed = 77;
 
-
 describe("calculateSpeedFactor", () => {
-  it("returns 1 at reference speed", () => {
-    expect(calculateSpeedFactor(REFERENCE_SPEED)).toBeCloseTo(1);
+  it("clamps to a minimum for very low or negative speeds", () => {
+    expect(calculateSpeedFactor(0)).toBeCloseTo(CONSUMPTION_FACTOR_AT_LOW_SPEED_THRESHOLD);
+    expect(calculateSpeedFactor(-10)).toBeCloseTo(CONSUMPTION_FACTOR_AT_LOW_SPEED_THRESHOLD);
+    expect(calculateSpeedFactor(LOW_SPEED_THRESHOLD / 2)).toBeCloseTo(
+      CONSUMPTION_FACTOR_AT_LOW_SPEED_THRESHOLD
+    );
   });
 
-  it("clamps to a minimum of 0.1 for very low or negative speeds", () => {
-    expect(calculateSpeedFactor(0)).toBeCloseTo(0.1);
-    expect(calculateSpeedFactor(-10)).toBeCloseTo(0.1);
+  it("increases linearly between low and high speed thresholds", () => {
+    const midSpeed = (LOW_SPEED_THRESHOLD + HIGH_SPEED_THRESHOLD) / 2;
+    const expected =
+      CONSUMPTION_FACTOR_AT_LOW_SPEED_THRESHOLD +
+      0.5 *
+        (CONSUMPTION_FACTOR_AT_HIGH_SPEED_THRESHOLD - CONSUMPTION_FACTOR_AT_LOW_SPEED_THRESHOLD);
+    expect(calculateSpeedFactor(midSpeed)).toBeCloseTo(expected);
   });
 
-  it("increases as speed increases", () => {
-    const doubleSpeed = REFERENCE_SPEED * 2;
-    const expected = LINEAR_RESISTANCE_WEIGHT * 2 + AERODYNAMIC_DRAG_WEIGHT * Math.pow(2, 2);
+  it("increases linearly between high and very high speed thresholds", () => {
+    const midSpeed = (HIGH_SPEED_THRESHOLD + VERY_HIGH_SPEED_THRESHOLD) / 2;
+    const expected =
+      CONSUMPTION_FACTOR_AT_HIGH_SPEED_THRESHOLD +
+      0.5 *
+        (CONSUMPTION_FACTOR_AT_VERY_HIGH_SPEED_THRESHOLD -
+          CONSUMPTION_FACTOR_AT_HIGH_SPEED_THRESHOLD);
+    expect(calculateSpeedFactor(midSpeed)).toBeCloseTo(expected);
+  });
 
-    expect(calculateSpeedFactor(doubleSpeed)).toBeCloseTo(expected);
+  it("increases by power law above very high speed threshold", () => {
+    const veryHighSpeed = VERY_HIGH_SPEED_THRESHOLD * 1.5;
+    const ratio = veryHighSpeed / VERY_HIGH_SPEED_THRESHOLD;
+    const expected =
+      CONSUMPTION_FACTOR_AT_VERY_HIGH_SPEED_THRESHOLD *
+      Math.pow(ratio, POWER_FACTOR_ABOVE_VERY_HIGH_SPEED);
+    expect(calculateSpeedFactor(veryHighSpeed)).toBeCloseTo(expected);
   });
 });
 
@@ -146,11 +169,11 @@ describe("calculateRange (integration)", () => {
   it("calculates the overall range using the mocked store values", () => {
     const { rangeKm, rangeMi } = calculateRange();
 
-    // The calculation uses the default store values (battery: 50 kWh, speed: 110 km/h, etc.).
+    // The calculation uses the default store values (battery: 75 kWh, speed: 77 km/h, etc.).
     // We know from a manual calculation that these defaults produce roughly:
-    //   rangeKm ≈ 599 km
-    //   rangeMi ≈ 372 mi
-    expect(rangeKm).toBe(599);
-    expect(rangeMi).toBe(372);
+    //   rangeKm ≈ 502 km
+    //   rangeMi ≈ 312 mi
+    expect(rangeKm).toBe(502);
+    expect(rangeMi).toBe(312);
   });
 });
