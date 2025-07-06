@@ -6,8 +6,37 @@ const REFERENCE_SPEED = 77;
 const CONVERSION_FACTOR = 10;
 const MILES_PER_KM = 0.621371;
 
+/**
+ * Consumption due to rolling resistance grows roughly linearly with speed,
+ * whereas aerodynamic drag grows with the square of speed. A simple way to
+ * capture these two influences without diving into vehicle-specific drag
+ * coefficients is to blend a linear and a quadratic term that are both
+ * anchored at the reference speed. We use the following heuristic model:
+ *
+ * factor = k_linear * (v / v_ref) + k_quad * (v / v_ref)^2
+ *
+ * where k_linear + k_quad = 1 to ensure the factor is exactly 1 when
+ * v == v_ref (77 km/h). Empirically, aerodynamic drag dominates at higher
+ * speeds so we assign it a larger weight (e.g. 70 %). To avoid negative or
+ * unrealistically small consumption factors at very low speeds we clamp the
+ * result to a sensible minimum.
+ */
 export function calculateSpeedFactor(speed: number) {
-  return 1 + 0.005 * (speed - REFERENCE_SPEED);
+  // Guard for negative inputs
+  const safeSpeed = Math.max(0, speed);
+
+  const speedRatio = safeSpeed / REFERENCE_SPEED;
+
+  // Tunable weights – tweak if you have better calibration data
+  const K_LINEAR = 0.3; // rolling resistance share
+  const K_QUAD = 0.7; // aerodynamic drag share (K_LINEAR + K_QUAD = 1)
+
+  const factor = K_LINEAR * speedRatio + K_QUAD * speedRatio * speedRatio;
+
+  // Ensure the factor never drops below 0.1 (10 % of reference consumption)
+  // to account for ancillary loads such as HVAC and electronics when moving
+  // at very low speeds.
+  return Math.max(0.1, factor);
 }
 
 export function calculateWindFactor(windSpeed: number) {
