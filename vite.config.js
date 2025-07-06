@@ -5,7 +5,7 @@ import { defineConfig } from "vite";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [svelte(), tailwindcss()],
-  base: "/estimate-electric-car-range/",
+  base: "/estimate-electric-car-range",
   test: {
     globals: true,
     environment: 'jsdom',

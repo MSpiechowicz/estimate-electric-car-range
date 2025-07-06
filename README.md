@@ -1,11 +1,17 @@
-# estimate-electric-car-range
-Project that help with estimation of average electric car range
+# Estimate your electric car range
+
+Project that help with estimation of average electric car range.
 
 ## Assets
 
 All of the Assets presents within the project are based on the open source projects:
 
 - [Favicon](https://favicon.io/emoji-favicons/electric-plug)
+- [Tabler](https://tabler.io/icons)
+
+## Github Pages
+
+You can test the live demo [here]().
 
 ### FAQ
 

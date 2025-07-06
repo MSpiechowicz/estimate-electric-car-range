@@ -9,18 +9,24 @@ html,
 body {
   min-height: 100vh;
   min-height: -webkit-fill-available;
-  background-color: var(--color-primary);
+  background: radial-gradient(
+      circle at 20% 30%,
+      rgba(255, 255, 255, 0.15) 0%,
+      rgba(255, 255, 255, 0) 60%
+    ),
+    linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+  background-attachment: fixed;
 }
 
 @theme {
-  --color-primary: #2A3D52;
-  --color-secondary: #3056A1;
+  --color-primary: #2a3d52;
+  --color-secondary: #3056a1;
 
-  --color-input-border: #D0D5DD;
-  --color-input-hover: #B0C5E0;
-  --color-input-focus: #3056A1;
-  --color-input-error: #D64545;
+  --color-input-border: #d0d5dd;
+  --color-input-hover: #b0c5e0;
+  --color-input-focus: #3056a1;
+  --color-input-error: #d64545;
 
-  --color-button-primary: #3056A1;
+  --color-button-primary: #3056a1;
   --color-button-hover: #254687;
 }
