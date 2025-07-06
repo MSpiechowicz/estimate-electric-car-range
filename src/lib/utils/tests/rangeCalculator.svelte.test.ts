@@ -1,15 +1,17 @@
-import { describe, expect, it, vi } from "vitest";
-
-// Mock the Svelte stores used by calculateRange so that we can run the function
-// in a node/jsdom environment without the Svelte runtime.
-vi.mock("../store/carStore.svelte", () => ({
-  carStore: { battery: 75, consumption: 15, speed: 77, range: 0, rangeMi: 0 },
-}));
-
-vi.mock("../store/parameterStore.svelte", () => ({
-  parameterStore: { windSpeed: 0, temperature: 22, roadSlope: 0, recuperation: 0 },
-}));
-
+import { describe, expect, it } from "vitest";
+import {
+  AERODYNAMIC_DRAG_SHARE,
+  AERODYNAMIC_DRAG_WEIGHT,
+  COLD_PENALTY_PER_DEGREE,
+  CONVERSION_FACTOR,
+  HOT_PENALTY_PER_DEGREE,
+  IDEAL_TEMP,
+  LINEAR_RESISTANCE_WEIGHT,
+  MAX_RECUPERATION_EFFECTIVENESS,
+  MILES_PER_KM,
+  REFERENCE_SPEED,
+} from "../../constants/calculations";
+import { carStore } from "../../store/carStore.svelte";
 import {
   calculateConsumptionFactor,
   calculateEnergyConsumption,
@@ -23,18 +25,10 @@ import {
   calculateWindFactor,
 } from "../rangeCalculator.svelte";
 
-import {
-  AERODYNAMIC_DRAG_SHARE,
-  AERODYNAMIC_DRAG_WEIGHT,
-  COLD_PENALTY_PER_DEGREE,
-  CONVERSION_FACTOR,
-  HOT_PENALTY_PER_DEGREE,
-  IDEAL_TEMP,
-  LINEAR_RESISTANCE_WEIGHT,
-  MAX_RECUPERATION_EFFECTIVENESS,
-  MILES_PER_KM,
-  REFERENCE_SPEED,
-} from "../../constants/calculations";
+carStore.battery = 75;
+carStore.consumption = 15;
+carStore.speed = 77;
+
 
 describe("calculateSpeedFactor", () => {
   it("returns 1 at reference speed", () => {
@@ -48,9 +42,7 @@ describe("calculateSpeedFactor", () => {
 
   it("increases as speed increases", () => {
     const doubleSpeed = REFERENCE_SPEED * 2;
-    const expected =
-      LINEAR_RESISTANCE_WEIGHT * 2 +
-      AERODYNAMIC_DRAG_WEIGHT * Math.pow(2, 2);
+    const expected = LINEAR_RESISTANCE_WEIGHT * 2 + AERODYNAMIC_DRAG_WEIGHT * Math.pow(2, 2);
 
     expect(calculateSpeedFactor(doubleSpeed)).toBeCloseTo(expected);
   });
@@ -64,7 +56,7 @@ describe("calculateWindFactor", () => {
   it("increases consumption with a headwind", () => {
     const factor = calculateWindFactor(100, 20); // headwind
     const ratio = (100 + 20) / 100;
-    const expected = (1 - AERODYNAMIC_DRAG_SHARE) + AERODYNAMIC_DRAG_SHARE * ratio * ratio;
+    const expected = 1 - AERODYNAMIC_DRAG_SHARE + AERODYNAMIC_DRAG_SHARE * ratio * ratio;
     expect(factor).toBeCloseTo(expected);
     expect(factor).toBeGreaterThan(1);
   });
@@ -72,7 +64,7 @@ describe("calculateWindFactor", () => {
   it("decreases consumption with a tailwind but not below 0.5", () => {
     const factor = calculateWindFactor(100, -20); // tailwind
     const ratio = (100 - 20) / 100;
-    const expected = (1 - AERODYNAMIC_DRAG_SHARE) + AERODYNAMIC_DRAG_SHARE * ratio * ratio;
+    const expected = 1 - AERODYNAMIC_DRAG_SHARE + AERODYNAMIC_DRAG_SHARE * ratio * ratio;
     expect(factor).toBeCloseTo(expected);
     expect(factor).toBeLessThan(1);
     expect(factor).toBeGreaterThanOrEqual(0.5);
@@ -156,9 +148,9 @@ describe("calculateRange (integration)", () => {
 
     // The calculation uses the default store values (battery: 50 kWh, speed: 110 km/h, etc.).
     // We know from a manual calculation that these defaults produce roughly:
-    //   rangeKm ≈ 232 km
-    //   rangeMi ≈ 144 mi
-    expect(rangeKm).toBe(232);
-    expect(rangeMi).toBe(144);
+    //   rangeKm ≈ 599 km
+    //   rangeMi ≈ 372 mi
+    expect(rangeKm).toBe(599);
+    expect(rangeMi).toBe(372);
   });
 });

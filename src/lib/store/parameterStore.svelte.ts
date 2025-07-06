@@ -1,6 +1,6 @@
 export const parameterStore = $state({
   // km/h
-  windSpeed: 0,
+  windSpeed: 5,
   // °C
   temperature: 20,
   // % - positive for uphill, negative for downhill
