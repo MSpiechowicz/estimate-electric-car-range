@@ -9,5 +9,12 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
+    coverage: {
+      enabled: true,
+      provider: 'istanbul',
+      reporter: ['text', 'html', 'lcov'],
+      all: true,
+      include: ['src/lib/utils/rangeCalculator.svelte.ts'],
+    },
   }
 });
