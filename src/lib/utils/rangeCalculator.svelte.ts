@@ -1,19 +1,17 @@
+import {
+  AERODYNAMIC_DRAG_SHARE,
+  AERODYNAMIC_DRAG_WEIGHT,
+  COLD_PENALTY_PER_DEGREE,
+  CONVERSION_FACTOR,
+  HOT_PENALTY_PER_DEGREE,
+  IDEAL_TEMP,
+  LINEAR_RESISTANCE_WEIGHT,
+  MAX_RECUPERATION_EFFECTIVENESS,
+  MILES_PER_KM,
+  REFERENCE_SPEED,
+} from "../constants/calculations";
 import { carStore } from "../store/carStore.svelte";
 import { parameterStore } from "../store/parameterStore.svelte";
-
-// Average speed of the official EPA combined test cycle
-const REFERENCE_SPEED = 77;
-const CONVERSION_FACTOR = 10;
-const MILES_PER_KM = 0.621371;
-// Recuperation can only recover a fraction of expended energy. We cap its
-// effectiveness to 25 % – tweak if you have more accurate data for a specific
-// vehicle. A value of 100 % recuperation in the UI will therefore yield a
-// 25 % reduction in net consumption (factor = 0.75).
-const MAX_RECUPERATION_EFFECTIVENESS = 0.25;
-const LINEAR_RESISTANCE_WEIGHT = 0.3;
-const AERODYNAMIC_DRAG_WEIGHT = 0.7;
-// Fraction of energy normally spent overcoming drag
-const AERODYNAMIC_DRAG_SHARE = 0.6;
 
 /**
  * Consumption due to rolling resistance grows roughly linearly with speed,
@@ -95,17 +93,25 @@ export function calculateWindFactor(speed: number, windSpeed: number) {
 }
 
 /**
- * Calculates the consumption reduction factor from temperature.
- * A lower temperature leads to a larger reduction in energy consumption,
- * up to a realistic maximum effectiveness.
+ * Calculates the consumption adjustment factor based on ambient temperature.
+ * The model assumes an ideal temperature for battery efficiency and adds
+ * penalties for temperatures outside this ideal.
+ * - Below ideal: Increased consumption due to battery chemistry and heating.
+ * - Above ideal: Increased consumption due to battery cooling and cabin A/C.
  *
- * @param temperature - A value from -60°C to 20°C.
- * @returns A factor that reduces or increases energy consumption based on the temperature.
+ * @param temperature - Ambient temperature in Celsius.
+ * @returns A consumption multiplier (e.g., 1.0 at ideal temp, >1 otherwise).
  */
-export function calculateTempFactor(temperature: number) {
-  return temperature < 20
-    ? 1 + (20 - temperature) * 0.01
-    : 1 + Math.max(0, temperature - 30) * 0.005;
+export function calculateTempFactor(temperature: number): number {
+
+
+  if (temperature < IDEAL_TEMP) {
+    // Colder than ideal, apply cold penalty
+    return 1 + (IDEAL_TEMP - temperature) * COLD_PENALTY_PER_DEGREE;
+  } else {
+    // Warmer than ideal, apply hot penalty
+    return 1 + (temperature - IDEAL_TEMP) * HOT_PENALTY_PER_DEGREE;
+  }
 }
 
 /**
